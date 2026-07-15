@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cors from "cors";
-import uploadRoutes from "./routes/uploadRoutes.js";
+import uploadRoutes from "./routers/uploadRoutes.js";
 
 dotenv.config();
 
