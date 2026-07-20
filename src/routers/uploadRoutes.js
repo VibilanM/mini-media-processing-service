@@ -1,5 +1,5 @@
 import express from "express";
-import { uploadVideo, getAllObjects } from "../controllers/uploadControllers.js";
+import { uploadVideo, getAllObjects, downloadObject } from "../controllers/uploadControllers.js";
 import upload from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
@@ -7,5 +7,7 @@ const router = express.Router();
 router.post("/", upload.single("video"), uploadVideo);
 
 router.get("/objects", getAllObjects);
+
+router.get("/objects/:key", downloadObject);
 
 export default router;

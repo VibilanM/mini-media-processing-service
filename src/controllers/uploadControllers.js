@@ -64,4 +64,18 @@ async function getAllObjects(req, res) {
     }
 }
 
-export { uploadVideo, getAllObjects };
+async function downloadObject(req, res) {
+    try {
+        const objectStream = await minioClient.getObject(process.env.MINIO_BUCKET, req.params.key);
+
+        objectStream.pipe(res);
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Failed to download object",
+            error: error.message
+        });
+    }
+}
+
+export { uploadVideo, getAllObjects, downloadObject };
