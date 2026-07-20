@@ -78,4 +78,21 @@ async function downloadObject(req, res) {
     }
 }
 
-export { uploadVideo, getAllObjects, downloadObject };
+async function deleteObject(req, res) {
+    try {
+        await minioClient.removeObject(process.env.MINIO_BUCKET, req.params.key);
+
+        res.json({
+            message: "Deleted"
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to delete object",
+            error: err.message
+        });
+    }
+}
+
+export { uploadVideo, getAllObjects, downloadObject, deleteObject };
