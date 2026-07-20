@@ -1,4 +1,7 @@
 import minioClient from "./minio.client.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 async function ensureBucket(bucketName) {
     const exists = await minioClient.bucketExists(bucketName);
@@ -13,7 +16,7 @@ async function ensureBucket(bucketName) {
 
 async function initializeStorage() {
     try {
-        await ensureBucket("media");
+        await ensureBucket(process.env.MINIO_BUCKET);
     } catch (error) {
         return res.status(500).json({
             success: false,

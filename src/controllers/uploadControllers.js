@@ -1,9 +1,12 @@
 import minioClient from "../storage/minio.client.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 async function uploadVideo(req, res) {
     try {
         const objectKey = `${Date.now()}-${req.file.originalname}`;
-        const bucketName = "media";
+        const bucketName = process.env.MINIO_BUCKET;
 
         await minioClient.putObject(bucketName, objectKey, req.file.buffer, req.file.size, {
             'Content-Type': req.file.mimetype
