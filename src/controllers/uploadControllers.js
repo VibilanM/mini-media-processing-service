@@ -30,4 +30,38 @@ async function uploadVideo(req, res) {
     }
 };
 
-export { uploadVideo };
+async function getAllObjects(req, res) {
+    try {
+        const objects = [];
+
+        const stream = minioClient.listObjects(process.env.MINIO_BUCKET, "", true);
+
+        stream.on("data", (obj) => {
+            objects.push({
+                key: obj.name,
+                size: obj.size,
+                lastModified: obj.lastModified,
+            });
+        });
+
+        stream.on("end", () => {
+            res.json(objects);
+        });
+
+        stream.on("error", (error) => {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch objects",
+                error: error.message
+            });
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch objects",
+            error: error.message
+        })
+    }
+}
+
+export { uploadVideo, getAllObjects };
