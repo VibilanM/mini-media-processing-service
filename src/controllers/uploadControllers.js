@@ -8,9 +8,12 @@ async function uploadVideo(req, res) {
         const objectKey = `${Date.now()}-${req.file.originalname}`;
         const bucketName = process.env.MINIO_BUCKET;
 
-        await minioClient.putObject(bucketName, objectKey, req.file.buffer, req.file.size, {
-            'Content-Type': req.file.mimetype
-        });
+        const metadata = {
+            'Content-Type': req.file.mimetype,
+            'uploadedBy': "Vibilan"
+        };
+
+        await minioClient.putObject(bucketName, objectKey, req.file.buffer, req.file.size, metadata);
 
         res.status(201).json({
             success: true,
@@ -95,4 +98,19 @@ async function deleteObject(req, res) {
     }
 }
 
-export { uploadVideo, getAllObjects, downloadObject, deleteObject };
+async function getMetadata(req, res) {
+    try {
+        const metadata = await minioClient.statObject(process.env.MINIO_BUCKET, req.params.key);
+
+        res.json(metadata);
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to get metadata",
+            error: error.message
+        });
+    }
+}
+
+export { uploadVideo, getAllObjects, downloadObject, deleteObject, getMetadata };
