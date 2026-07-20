@@ -3,10 +3,12 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import cors from "cors";
 import uploadRoutes from "./routers/uploadRoutes.js";
+import { connectToMinIO } from "./storage/minio.client.js";
 
 dotenv.config();
 
 connectDB();
+connectToMinIO();
 
 const app = express();
 
