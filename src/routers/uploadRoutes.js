@@ -1,5 +1,5 @@
 import express from "express";
-import { uploadVideo, getAllObjects, downloadObject, deleteObject, getMetadata } from "../controllers/uploadControllers.js";
+import { uploadVideo, getAllObjects, downloadObject, deleteObject, getMetadata, getPresignedURL } from "../controllers/uploadControllers.js";
 import upload from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
@@ -13,5 +13,7 @@ router.get("/objects/:key", downloadObject);
 router.delete("/objects/:key", deleteObject);
 
 router.get("/objects/get-metadata/:key", getMetadata);
+
+router.get("/objects/:key/url", getPresignedURL);
 
 export default router;

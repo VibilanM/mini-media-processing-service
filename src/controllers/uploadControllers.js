@@ -113,4 +113,28 @@ async function getMetadata(req, res) {
     }
 }
 
-export { uploadVideo, getAllObjects, downloadObject, deleteObject, getMetadata };
+async function getPresignedURL(req, res) {
+
+    try {
+
+        const url = await minioClient.presignedGetObject(
+            "media",
+            req.params.key,
+            60 * 5
+        );
+
+        res.json({
+            url
+        });
+
+    } catch (err) {
+
+        res.status(500).json({
+            message: err.message
+        });
+
+    }
+
+}
+
+export { uploadVideo, getAllObjects, downloadObject, deleteObject, getMetadata, getPresignedURL };
