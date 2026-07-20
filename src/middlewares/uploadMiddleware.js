@@ -5,7 +5,7 @@ dotenv.config();
 
 const memoryStorage = multer.memoryStorage();
 
-const diskStorage = multer.diskStorage({
+/* const diskStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "uploads/");
     },
@@ -13,9 +13,10 @@ const diskStorage = multer.diskStorage({
         cb(null, `${Date.now()}-${file.originalname}`);
     }
 });
+*/
 
 const upload = multer({
-    storage: diskStorage
+    storage: memoryStorage
 });
 
 export default upload;
