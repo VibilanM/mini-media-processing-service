@@ -16,4 +16,4 @@ async function redisDisconnect() {
     console.log("Redis disconnected");
 }
 
-export { redisConnect, redisDisconnect };
+export { redis, redisConnect, redisDisconnect };
