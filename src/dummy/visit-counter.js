@@ -69,7 +69,7 @@ app.post("/score", async (req, res) => {
             return res.status(400).json({
                 message: "Name and score required."
             });
-        }
+        } 
 
         await redis.zAdd("leaderboard", [
             {
@@ -104,6 +104,48 @@ app.get("/leaderboard", async (req, res) => {
         res.json({
             leaderboard: result
         });
+    }
+    catch (err) {
+        res.status(500).json({
+            error: err.message
+        });
+    }
+});
+
+app.post("/session", async (req, res) => {
+    try {
+        const { user, theme, language } = req.body;
+
+        if (!user) {
+            return res.status(400).json({
+                message: "User required."
+            });
+        }
+
+        const sessionId = `session:${user}`;
+
+        await redis.hSet(sessionId, {
+            theme,
+            language,
+            timestamp: new Date().toISOString()
+        });
+
+        res.json({
+            message: "Session updated."
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            error: err.message
+        });
+    }
+});
+
+app.get("/session/:id", async (req, res) => {
+    try {
+        const sessionDetails = await redis.hGetAll(`session:${req.params.id}`);
+
+        res.json(sessionDetails);
     }
     catch (err) {
         res.status(500).json({
