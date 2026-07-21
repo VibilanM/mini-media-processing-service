@@ -6,7 +6,8 @@
     "minio": "^8.0.7",
     "mongodb": "^7.5.0",
     "mongoose": "^9.7.4",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "redis": "^6.1.0"
   },
   "type": "module"
 }

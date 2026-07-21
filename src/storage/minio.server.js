@@ -18,10 +18,7 @@ async function initializeStorage() {
     try {
         await ensureBucket(process.env.MINIO_BUCKET);
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: "Failed to initialize storage"
-        });
+        console.log("Error: ", error);
     }
 }
 

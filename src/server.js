@@ -4,11 +4,13 @@ import connectDB from "./config/db.js";
 import cors from "cors";
 import uploadRoutes from "./routers/uploadRoutes.js";
 import initializeStorage from "./storage/minio.server.js";
+import { redisConnect } from "./config/redis.js";
 
 dotenv.config();
 
 connectDB();
 initializeStorage();
+redisConnect();
 
 const app = express();
 
