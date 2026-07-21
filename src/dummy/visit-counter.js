@@ -61,6 +61,57 @@ app.get("/search", async (req, res) => {
     }
 });
 
+app.post("/score", async (req, res) => {
+    try {
+        const { name, score } = req.body;
+
+        if (!name || score === undefined) {
+            return res.status(400).json({
+                message: "Name and score required."
+            });
+        }
+
+        await redis.zAdd("leaderboard", [
+            {
+                score: Number(score),
+                value: name
+            },
+        ]);
+
+        res.json({
+            message: "Score updated."
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            error: err.message
+        });
+    }
+});
+
+app.get("/leaderboard", async (req, res) => {
+    try {
+        const leaderboard = await redis.zRangeWithScores("leaderboard", 0, -1, {
+            REV: true
+        });
+
+        const result = leaderboard.map((player, index) => ({
+            rank: index + 1,
+            name: player.value,
+            score: player.score
+        }));
+
+        res.json({
+            leaderboard: result
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            error: err.message
+        });
+    }
+});
+
 app.listen(3000, () => {
     console.log("Server running on port 3000");
 });
