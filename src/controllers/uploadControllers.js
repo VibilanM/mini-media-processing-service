@@ -1,5 +1,7 @@
 import minioClient from "../storage/minio.client.js";
 import dotenv from "dotenv";
+import Video from "../models/videoModel.js";
+import videoQueue from "../queues/videoQueues.js";
 
 dotenv.config();
 
@@ -15,12 +17,24 @@ async function uploadVideo(req, res) {
 
         await minioClient.putObject(bucketName, objectKey, req.file.buffer, req.file.size, metadata);
 
+        const video = await Video.create({
+            title: req.body.title,
+            storageKey: objectKey
+        })
+
+        await videoQueue.add("process-video", {
+            videoId: video._id,
+            storageKey: objectKey,
+        });
+
         res.status(201).json({
             success: true,
             message: "Video uploaded successfully",
             data: {
+                video_id: video._id,
                 bucketName,
                 objectKey,
+                status: video.status
             }
         });
     }
