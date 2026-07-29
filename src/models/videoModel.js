@@ -8,6 +8,13 @@ const videoSchema = new mongoose.Schema({
         enum: ["queued", "processing", "completed", "failed"],
         default: "queued"
     },
+    duration: Number,
+    width: Number,
+    height: Number,
+    container: String,
+    bitrate: Number,
+    videoCodec: String,
+    audioCodec: String,
 }, { timestamps: true });
 
 const Video = mongoose.model("Video", videoSchema);
