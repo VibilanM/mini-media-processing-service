@@ -2,6 +2,7 @@ import minioClient from "../storage/minio.client.js";
 import dotenv from "dotenv";
 import Video from "../models/videoModel.js";
 import videoQueue from "../queues/videoQueues.js";
+import { getVideoInfo, simplify } from "../utils/ffmpeg.js";
 
 dotenv.config();
 
@@ -10,16 +11,20 @@ async function uploadVideo(req, res) {
         const objectKey = `${Date.now()}-${req.file.originalname}`;
         const bucketName = process.env.MINIO_BUCKET;
 
-        const metadata = {
-            'Content-Type': req.file.mimetype,
-            'uploadedBy': "Vibilan"
-        };
+        const metadata = simplify(await getVideoInfo(req.file.path));
 
         await minioClient.putObject(bucketName, objectKey, req.file.buffer, req.file.size, metadata);
 
         const video = await Video.create({
             title: req.body.title,
-            storageKey: objectKey
+            storageKey: objectKey,
+            duration: metadata.duration,
+            width: metadata.width,
+            height: metadata.height,
+            container: metadata.container,
+            bitrate: metadata.bitrate,
+            videoCodec: metadata.videoCodec,
+            audioCodec: metadata.audioCodec,
         })
 
         await videoQueue.add("process-video", {
