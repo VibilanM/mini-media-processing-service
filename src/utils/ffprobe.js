@@ -12,6 +12,25 @@ function getVideoInfo(videoPath) {
     });
 }
 
+function simplify(info) {
+    const video = info.streams.find(s => s.codec_type === "video");
+
+    const audio = info.streams.find(s => s.codec_type === "audio");
+
+    return {
+        filename: info.format.filename,
+        container: info.format.format_name,
+        duration: Number(info.format.duration),
+        bitrate: Number(info.format.bit_rate),
+        videoCodec: video.codec_name,
+        audioCodec: audio?.codec_name,
+        width: Number(video.width),
+        height: Number(video.height),
+        frameRate: Number(video.avg_frame_rate)
+    };
+}
+
 export {
-    getVideoInfo
+    getVideoInfo,
+    simplify
 };
