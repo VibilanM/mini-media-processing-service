@@ -1,0 +1,36 @@
+import { exec } from "node:child_process";
+import path from "node:path";
+
+function run(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, (err, stdout, stderr) => {
+            if (err) {
+                err.stderr = stderr;
+                return reject(err);
+            }
+            resolve(stdout);
+        });
+    });
+}
+
+async function extractMetadata(inputPath) {
+    const raw = await run(
+        `ffprobe -v quiet -print_format json -show_format -show_streams "${inputPath}"`
+    );
+
+    const info = JSON.parse(raw);
+    
+    const video = info.streams.find(s => s.codec_type === "video");
+    const audio = info.streams.find(s => s.codec_type === "audio");
+
+    return {
+        duration: Number(info.format.duration),
+        width: Number(video.width),
+        height: Number(video.height),
+        container: info.format.format_name,
+        bitrate: Number(info.format.bit_rate),
+        videoCodec: video.codec_name,
+        audioCodec: audio?.codec_name,
+    };
+}
+
