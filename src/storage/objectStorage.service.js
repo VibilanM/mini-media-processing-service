@@ -27,3 +27,5 @@ async function getPresignedUrl(objectKey, expirySeconds = 60 * 60) {
     return await minioClient.presignedGetObject(BUCKET, objectKey, expirySeconds);
 }
 
+export { uploadFile, downloadFile, deleteFile, getPresignedUrl };
+
