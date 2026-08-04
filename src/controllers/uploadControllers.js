@@ -2,7 +2,7 @@ import minioClient from "../storage/minio.client.js";
 import dotenv from "dotenv";
 import Video from "../models/videoModel.js";
 import videoQueue from "../queues/videoQueues.js";
-import { getVideoInfo, simplify } from "../utils/ffmpeg.js";
+import { getVideoInfo, simplify } from "../utils/ffprobe.js";
 
 dotenv.config();
 
