@@ -19,6 +19,10 @@ async function downloadFile(objectKey, localPath) {
     return localPath;
 }
 
+async function deleteFile(objectKey) {
+    await minioClient.removeObject(BUCKET, objectKey);
+}
+
 async function getPresignedUrl(objectKey, expirySeconds = 60 * 60) {
     return await minioClient.presignedGetObject(BUCKET, objectKey, expirySeconds);
 }
