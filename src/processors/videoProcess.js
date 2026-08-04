@@ -35,3 +35,21 @@ async function metadataStage(videoId, localInputPath) {
     console.log(`[${videoId}] Metadata extracted:`, metadata);
     return metadata;
 }
+
+async function thumbnailStage(videoId, localInputPath) {
+    await updateStatus(videoId, "thumbnail");
+
+    const thumbnailFilename = `${videoId}-thum.jpg`;
+    const localThumbPath = path.join(TEMP_DIR, thumbnailFilename);
+
+    await generateThumbnail(localInputPath, localThumbPath);
+
+    const objectKey = `thumbnails/${thumbnailFilename}`;
+    await uploadFile(localThumbPath, objectKey);
+
+    await Video.findByIdAndUpdate(videoId, { thumbnail: objectKey });
+
+    console.log(`[${videoId}] Thumbnail uploaded -> ${objectKey}`);
+    return objectKey;
+}
+
