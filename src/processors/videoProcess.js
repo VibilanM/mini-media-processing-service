@@ -17,3 +17,21 @@ async function updateStatus(videoId, status, extraFields = {}) {
     console.log(`[${videoId}] Status -> ${status}`);
 }
 
+async function metadataStage(videoId, localInputPath) {
+    await updateStatus(videoId, "metadata");
+
+    const metadata = await extractMetadata(localInputPath);
+
+    await Video.findByIdAndUpdate(videoId, {
+        duration: metadata.duration,
+        width: metadata.width,
+        height: metadata.height,
+        container: metadata.container,
+        bitrate: metadata.bitrate,
+        videoCodec: metadata.videoCodec,
+        audioCodec: metadata.audioCodec,
+    });
+
+    console.log(`[${videoId}] Metadata extracted:`, metadata);
+    return metadata;
+}
