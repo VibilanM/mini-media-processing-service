@@ -34,3 +34,10 @@ async function extractMetadata(inputPath) {
     };
 }
 
+async function generateThumbnail(inputPath, outputPath) {
+    await run(
+        `ffmpeg -i "${inputPath}" -ss 00:00:01 -frames:v 1 "${outputPath}" -y`
+    );
+    return outputPath;
+}
+
