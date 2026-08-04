@@ -1,12 +1,30 @@
 import mongoose from "mongoose";
 
+const versionSchema = new mongoose.Schema({
+    resolution: String,
+    objectKey: String,
+    width: Number,
+    height: Number,
+}, {
+    _id: false
+});
+
 const videoSchema = new mongoose.Schema({
     title: String,
-    storageKey: String,
+    originalKey: String,
     status: {
         type: String,
-        enum: ["queued", "processing", "completed", "failed"],
-        default: "queued"
+        enum: [
+            "uploaded",
+            "queued",
+            "metadata",
+            "thumbnail",
+            "transcoding",
+            "uploading",
+            "completed",
+            "failed"
+        ],
+        default: "uploaded"
     },
     duration: Number,
     width: Number,
@@ -15,6 +33,9 @@ const videoSchema = new mongoose.Schema({
     bitrate: Number,
     videoCodec: String,
     audioCodec: String,
+    thumbnail: String,
+    versions: [versionSchema],
+    error: String,
 }, { timestamps: true });
 
 const Video = mongoose.model("Video", videoSchema);
