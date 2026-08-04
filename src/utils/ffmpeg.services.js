@@ -41,3 +41,16 @@ async function generateThumbnail(inputPath, outputPath) {
     return outputPath;
 }
 
+async function transcode(inputPath, outputPath, width, height) {
+    await run(
+        `ffmpeg -i "${inputPath}"` +
+        `-vf "scale=${width}:-2" ` +
+        `-c:v libx264 -crf 23 -preset medium ` +
+        `-c:a aac -b:a 128k ` +
+        `-movflags +faststart ` +
+        `"${outputPath}" -y`
+    );
+    return outputPath;
+}
+
+export { extractMetadata, generateThumbnail, transcode };
