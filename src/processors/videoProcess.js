@@ -53,3 +53,35 @@ async function thumbnailStage(videoId, localInputPath) {
     return objectKey;
 }
 
+async function transcodeStage(videoId, localInputPath, sourceMetadata) {
+    const versions = []
+
+    for (const res of RESOLUTIONS) {
+        if (res.width > sourceMetadata.width) {
+            continue;
+        }
+
+        await updateStatus(videoId, "transcoding");
+        console.log(`[${videoId}] Transcoding ${res.name}....`);
+
+        const outputFilename = `${videoId}-$res.name}.mp4`;
+        const localOutputPath = path.join(TEMP_DIR, outputFilename);
+
+        await transcode(localInputPath, localOutputPath, res.width);
+
+        const outputMeta = await extractMetadata(localOutputPath);
+
+        versions.push({
+            resolution: res.name,
+            objectKey: `videos/${outputFilename}`,
+            localPathL localOutputPath,
+            width: outputMeta.width,
+            height: outputMeta.height,
+        });
+
+        console.log(`[${videoId}] ${res.name} transcoded -> ${localOutputPath}`);
+    }
+
+    return versions;
+}
+
