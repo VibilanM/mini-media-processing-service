@@ -94,3 +94,19 @@ async function uploadStage(videoId, versions) {
     }
 }
 
+async function saveMetadataStage(videoId, versions) {
+    const cleanVersions = versions.map(v => ({
+        resolution: v.resolution,
+        objectKey: v.objectKey,
+        width: v.width,
+        height: v.height,
+    }));
+
+    await Video.findByIdAndUpdate(videoId, {
+        versions: cleanVersions,
+        status: "completed",
+    });
+
+    console.log(`[${videoId}] All versions saved. Statys -> Completed`);
+}
+
