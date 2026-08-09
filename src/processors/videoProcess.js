@@ -74,7 +74,7 @@ async function transcodeStage(videoId, localInputPath, sourceMetadata) {
         versions.push({
             resolution: res.name,
             objectKey: `videos/${outputFilename}`,
-            localPathL localOutputPath,
+            localPath: localOutputPath,
             width: outputMeta.width,
             height: outputMeta.height,
         });
@@ -83,5 +83,14 @@ async function transcodeStage(videoId, localInputPath, sourceMetadata) {
     }
 
     return versions;
+}
+
+async function uploadStage(videoId, versions) {
+    await updateStatus(videoId, "uploading");
+
+    for (const v of versions) {
+        await uploadFile(v.localPath, v.objectKey);
+        console.log(`[${videoId}] Uploaded ${v.resolution} -> ${v.objectKey}`);
+    }
 }
 
