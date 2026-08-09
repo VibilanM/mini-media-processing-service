@@ -39,7 +39,7 @@ async function metadataStage(videoId, localInputPath) {
 async function thumbnailStage(videoId, localInputPath) {
     await updateStatus(videoId, "thumbnail");
 
-    const thumbnailFilename = `${videoId}-thum.jpg`;
+    const thumbnailFilename = `${videoId}-thumb.jpg`;
     const localThumbPath = path.join(TEMP_DIR, thumbnailFilename);
 
     await generateThumbnail(localInputPath, localThumbPath);
@@ -110,3 +110,59 @@ async function saveMetadataStage(videoId, versions) {
     console.log(`[${videoId}] All versions saved. Statys -> Completed`);
 }
 
+async function cleanupStage(videoId, localInputPath, versions) {
+    const filesToDelete = [
+        localInputPath,
+        path.join(TEMP_DIR, `${videoId}-thumb.jpg`),
+        ...versions.map(v => v.localPath),
+    ];
+
+    for (const filePath of fileToDelete) {
+        try {
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log(`[${videoId}] Deleted temp file: ${filePath}`);
+            }
+        }
+        catch (error) {
+            console.warn(`[${videoId}] Failed to delete ${filePath}: ${err.message}`);
+        }
+    }
+}
+
+async function processViceo(videoId, originalKey) {
+    if (!fs.existsSync(TEMP_DIR)) {
+        fs.mkdirSync(TEMP_DIR, { recursive: true });
+    }
+
+    const localInputPath = path.join(TEMP_DIR, `${videoId}-original.mp4`);
+    let versions = [];
+
+    try {
+        await downloadFile(originalKey, localInputPath);
+        console.log(`[${videoId}] Downloaded original -> ${localInputPath}`);
+
+        const metadata = await metadataStage(videoId, localInputPath);
+
+        await thumbnailStage(videoId, localInputPath);
+
+        versions = await transcodeStage(videoId, localInputPath, metadata);
+
+        await uploadStage(videoId, versions);
+
+        await saveMetadataStage(videoId, versions);
+    }
+    catch (err) {
+        await updateStatus(videoId, "failed", {
+            error: err.message || "Unknown error during processing"
+        });
+
+        console.error(`[${videoId}] Pipeline failed: ${err}`);
+        throw err;
+    }
+    finally {
+        await cleanupStage(videoId, localInputPath, versions);
+    }
+}
+
+export { processVideo };
