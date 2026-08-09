@@ -1,49 +1,47 @@
 import minioClient from "../storage/minio.client.js";
+import fs from "node:fs";
 import dotenv from "dotenv";
 import Video from "../models/videoModel.js";
 import videoQueue from "../queues/videoQueues.js";
-import { getVideoInfo, simplify } from "../utils/ffprobe.js";
 
 dotenv.config();
 
 async function uploadVideo(req, res) {
     try {
-        const objectKey = `${Date.now()}-${req.file.originalname}`;
+        const objectKey = `originals/${Date.now()}-${req.file.originalname}`;
         const bucketName = process.env.MINIO_BUCKET;
 
-        const metadata = simplify(await getVideoInfo(req.file.path));
+        const fileStream = fs.createReadStream(req.file.path);
+        const stat = fs.statSync(req.file.path);
 
-        await minioClient.putObject(bucketName, objectKey, req.file.buffer, req.file.size, metadata);
+        await minioClient.putObject(bucketName, objectKey, fileStream, stat.size);
 
         const video = await Video.create({
             title: req.body.title,
-            storageKey: objectKey,
-            duration: metadata.duration,
-            width: metadata.width,
-            height: metadata.height,
-            container: metadata.container,
-            bitrate: metadata.bitrate,
-            videoCodec: metadata.videoCodec,
-            audioCodec: metadata.audioCodec,
-        })
+            originalKey: objectKey,
+            status: "queued",
+        });
 
         await videoQueue.add("process-video", {
-            videoId: video._id,
-            storageKey: objectKey,
+            videoId: video._id.toString(),
+            originalKey: objectKey,
         });
+
+        fs.unlinkSync(req.file.path);
 
         res.status(201).json({
             success: true,
-            message: "Video uploaded successfully",
+            message: "Video uploaded and queued for processing",
             data: {
                 video_id: video._id,
-                bucketName,
-                objectKey,
                 status: video.status
             }
         });
     }
     catch (error) {
+        if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
         res.status(500).json({
             success: false,
             message: "Failed to upload video",
@@ -153,7 +151,46 @@ async function getPresignedURL(req, res) {
         });
 
     }
-
 }
 
-export { uploadVideo, getAllObjects, downloadObject, deleteObject, getMetadata, getPresignedURL };
+async function getVideoStatus(req, res) {
+    try {
+        const video = await Video.findById(req.params.id);
+
+        if (!video) {
+            return res.status(404).json({
+                success: false,
+                message: "Video not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id:        video._id,
+                title:     video.title,
+                status:    video.status,
+                thumbnail: video.thumbnail || null,
+                versions:  video.versions || [],
+                metadata: {
+                    duration:   video.duration,
+                    width:      video.width,
+                    height:     video.height,
+                    codec:      video.videoCodec,
+                },
+                error:     video.error || null,
+                createdAt: video.createdAt,
+                updatedAt: video.updatedAt,
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to get video status",
+            error: error.message
+        });
+    }
+}
+
+
+export { uploadVideo, getAllObjects, downloadObject, deleteObject, getMetadata, getPresignedURL, getVideoStatus };
