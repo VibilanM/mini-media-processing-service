@@ -1,37 +1,36 @@
 import { Worker } from "bullmq";
-import Video from "../models/videoModel.js";
 import dotenv from "dotenv";
 import connectDB from "../config/db.js";
+import { processVideo } from "../processors/videoProcess.js";
 
 dotenv.config();
-connectDB();
+
+await connectDB();
 
 const worker = new Worker(
     "video-processing",
     async (job) => {
-        const { videoId } = job.data;
+        const { videoId, originalKey } = job.data;
 
-        await Video.findByIdAndUpdate(videoId, {
-            status: "processing"
-        });
+        console.log(`[Worker] Picked up job for video: ${videoId}`);
 
-        console.log("Starting processing for job: ", videoId);
+        await processVideo(videoId, originalKey);
 
-        for (let i = 20; i <= 100; i += 20) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            console.log(`Processing ${i}%`);
-        }
-
-        await Video.findByIdAndUpdate(videoId, {
-            status: "ready"
-        });
-
-        console.log("Processing completed for job: ", videoId);
+        console.log(`[Worker] Finished job for video: ${videoId}`);
     },
     {
         connection: {
             host: "localhost",
             port: 6379
-        }
+        },
+        concurrency: 1,
     }
 );
+
+worker.on("completed", (job) => {
+    console.log(`[Worker] Job ${job.id} completed`);
+});
+
+worker.on("failed", (job, err) => {
+    console.error(`[Worker] Job ${job.id} failed: ${err.message}`);
+});
