@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import Video from "../models/videoModel.js";
-import { extractMetadata, generateThumbnail, transcode } from "../services/ffmpeg.services.js";
+import { extractMetadata, generateThumbnail, transcode } from "../utils/ffmpeg.services.js";
 import { uploadFile, downloadFile } from "../storage/objectStorage.service.js";
 
 const RESOLUTIONS = [
@@ -64,7 +64,7 @@ async function transcodeStage(videoId, localInputPath, sourceMetadata) {
         await updateStatus(videoId, "transcoding");
         console.log(`[${videoId}] Transcoding ${res.name}....`);
 
-        const outputFilename = `${videoId}-$res.name}.mp4`;
+        const outputFilename = `${videoId}-${res.name}.mp4`;
         const localOutputPath = path.join(TEMP_DIR, outputFilename);
 
         await transcode(localInputPath, localOutputPath, res.width);
@@ -117,7 +117,7 @@ async function cleanupStage(videoId, localInputPath, versions) {
         ...versions.map(v => v.localPath),
     ];
 
-    for (const filePath of fileToDelete) {
+    for (const filePath of filesToDelete) {
         try {
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
@@ -125,12 +125,12 @@ async function cleanupStage(videoId, localInputPath, versions) {
             }
         }
         catch (error) {
-            console.warn(`[${videoId}] Failed to delete ${filePath}: ${err.message}`);
+            console.warn(`[${videoId}] Failed to delete ${filePath}: ${error.message}`);
         }
     }
 }
 
-async function processViceo(videoId, originalKey) {
+async function processVideo(videoId, originalKey) {
     if (!fs.existsSync(TEMP_DIR)) {
         fs.mkdirSync(TEMP_DIR, { recursive: true });
     }
