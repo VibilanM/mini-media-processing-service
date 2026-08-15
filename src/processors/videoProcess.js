@@ -2,7 +2,7 @@ import path from "node:path";
 import fs from "node:fs";
 import Video from "../models/videoModel.js";
 import { extractMetadata, generateThumbnail, transcode, generateHLS } from "../utils/ffmpeg.services.js";
-import { uploadFile, downloadFile } from "../storage/objectStorage.service.js";
+import { uploadFile, downloadFile, uploadDirectory } from "../storage/objectStorage.service.js";
 
 const RESOLUTIONS = [
     { name: "1080p", width: 1920 },
@@ -110,19 +110,7 @@ async function hlsStage(videoId, versions) {
 
     console.log(`[${videoId}] HLS generated in ${hlsOutputDir}`);
 
-    const hlsFiles = fs.readdirSync(hlsOutputDir);
-
-    const hlsObjectKeys = [];
-
-    for (const filename of hlsFiles) {
-        const localPath = path.join(jlsOutputDir, filename);
-        const objectKey = `videos/${videoId}/hls/${filename}`;
-
-        await uploadFile(localPath, objectKey);
-        hlsObjectKeys.push(objectKey);
-
-        console.log(`[${videoId}] Uploaded HLS file: ${objectKey}`);
-    }
+    const hlsObjectKeys = await uploadDirectory(hlsOutputDir, `videos/${videoId}/hls`);
 
     const playlistKey = `videos/${videoId}/hls/playlist.m3u8`;
 

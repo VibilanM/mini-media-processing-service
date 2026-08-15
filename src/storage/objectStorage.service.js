@@ -1,6 +1,7 @@
 import minioClient from "./minio.client.js";
 import fs from "node:fs";
 import dotenv from "dotenv";
+import path from "node:path";
 
 dotenv.config();
 
