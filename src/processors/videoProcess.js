@@ -135,7 +135,7 @@ async function hlsStage(videoId, versions) {
     };
 }
 
-async function saveMetadataStage(videoId, versions) {
+async function saveMetadataStage(videoId, versions, hlsResult) {
     const cleanVersions = versions.map(v => ({
         resolution: v.resolution,
         objectKey: v.objectKey,
@@ -148,10 +148,19 @@ async function saveMetadataStage(videoId, versions) {
         status: "completed",
     });
 
+    if (hlsResult) {
+        updateFields.hls = {
+            playlistKey: hlsResult.playlistKey,
+            segmentCount: hlsResult.segmentCount,
+        };
+    }
+
+    await Video.findByIdAndUpdate(videoId, updateFields)
+
     console.log(`[${videoId}] All versions saved. Statys -> Completed`);
 }
 
-async function cleanupStage(videoId, localInputPath, versions) {
+async function cleanupStage(videoId, localInputPath, versions, hlsResult) {
     const filesToDelete = [
         localInputPath,
         path.join(TEMP_DIR, `${videoId}-thumb.jpg`),
@@ -169,6 +178,11 @@ async function cleanupStage(videoId, localInputPath, versions) {
             console.warn(`[${videoId}] Failed to delete ${filePath}: ${error.message}`);
         }
     }
+    
+    if (hlsResult?.hlsOutputDir && fs.existsSync(hlsResult.hlsOutputDir)) {
+        fs.rmSync(hlsResult.hlsOutputDir, { recursive: true, force: true });
+        console.log(`[${videoId}] Deleted HLS temp directory: ${hlsResult.hlsOutputDir}`);
+    }
 }
 
 async function processVideo(videoId, originalKey) {
@@ -178,6 +192,7 @@ async function processVideo(videoId, originalKey) {
 
     const localInputPath = path.join(TEMP_DIR, `${videoId}-original.mp4`);
     let versions = [];
+    let hlsResult = null;
 
     try {
         await downloadFile(originalKey, localInputPath);
@@ -191,7 +206,9 @@ async function processVideo(videoId, originalKey) {
 
         await uploadStage(videoId, versions);
 
-        await saveMetadataStage(videoId, versions);
+        hlsResult = await hlsStage(videoId, versions);
+
+        await saveMetadataStage(videoId, versions, hlsResult);
     }
     catch (err) {
         await updateStatus(videoId, "failed", {
@@ -202,7 +219,7 @@ async function processVideo(videoId, originalKey) {
         throw err;
     }
     finally {
-        await cleanupStage(videoId, localInputPath, versions);
+        await cleanupStage(videoId, localInputPath, versions, hlsResult);
     }
 }
 
