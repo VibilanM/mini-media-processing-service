@@ -178,7 +178,7 @@ async function cleanupStage(videoId, localInputPath, versions, hlsResult) {
             console.warn(`[${videoId}] Failed to delete ${filePath}: ${error.message}`);
         }
     }
-    
+
     if (hlsResult?.hlsOutputDir && fs.existsSync(hlsResult.hlsOutputDir)) {
         fs.rmSync(hlsResult.hlsOutputDir, { recursive: true, force: true });
         console.log(`[${videoId}] Deleted HLS temp directory: ${hlsResult.hlsOutputDir}`);

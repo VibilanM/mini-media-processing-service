@@ -21,6 +21,7 @@ const videoSchema = new mongoose.Schema({
             "thumbnail",
             "transcoding",
             "uploading",
+            "generating_hls",
             "completed",
             "failed"
         ],
@@ -35,6 +36,10 @@ const videoSchema = new mongoose.Schema({
     audioCodec: String,
     thumbnail: String,
     versions: [versionSchema],
+    hls: {
+        playlistKey: String,
+        segmentCount: Number,
+    },
     error: String,
 }, { timestamps: true });
 
