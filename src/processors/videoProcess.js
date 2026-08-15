@@ -1,7 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import Video from "../models/videoModel.js";
-import { extractMetadata, generateThumbnail, transcode } from "../utils/ffmpeg.services.js";
+import { extractMetadata, generateThumbnail, transcode, generateHLS } from "../utils/ffmpeg.services.js";
 import { uploadFile, downloadFile } from "../storage/objectStorage.service.js";
 
 const RESOLUTIONS = [
@@ -92,6 +92,47 @@ async function uploadStage(videoId, versions) {
         await uploadFile(v.localPath, v.objectKey);
         console.log(`[${videoId}] Uploaded ${v.resolution} -> ${v.objectKey}`);
     }
+}
+
+async function hlsStage(videoId, versions) {
+    await updateStatus(videoId, "generating_hls");
+
+    const source = versions.find(v => v.resolution === "720p");
+
+    if (!source) {
+        console.log(`[${videoId}] No 720p version found. Skipping HLS.`);
+        return null;
+    }
+
+    const hlsOutpuDir = path.join(TEMP_DIR, `${videoId}-hls`);
+
+    await generateHLS(source.localPath, hlsOutputDir);
+
+    console.log(`[${videoId}] HLS generated in ${hlsOutputDir}`);
+
+    const hlsFiles = fs.readdirSync(hlsOutputDir);
+
+    const hlsObjectKeys = [];
+
+    for (const filename of hlsFiles) {
+        const localPath = path.join(jlsOutputDir, filename);
+        const objectKey = `videos/${videoId}/hls/${filename}`;
+
+        await uploadFile(localPath, objectKey);
+        hlsObjectKeys.push(objectKey);
+
+        console.log(`[${videoId}] Uploaded HLS file: ${objectKey}`);
+    }
+
+    const playlistKey = `videos/${videoId}/hls/playlist.m3u8`;
+
+    console.log(`[$videoId}] HLS upload complete. Playlist: ${playlistKey}`);
+
+    return {
+        playlistKey,
+        segmentCount: hlsFiles.filter(f => f.endsWith(".ts")).length,
+        hlsOutputDir,
+    };
 }
 
 async function saveMetadataStage(videoId, versions) {
