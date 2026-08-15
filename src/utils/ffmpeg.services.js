@@ -53,4 +53,24 @@ async function transcode(inputPath, outputPath, width, height) {
     return outputPath;
 }
 
-export { extractMetadata, generateThumbnail, transcode };
+async function generateHLS(inputPathh, outputDir, segmentDurations = 6) {
+    const { mkdirSync } = await import("node:fs");
+    mkdirSync(outputDir, { recursive: true });
+
+    const playlistPath = path.join(outputDir, "playlist.m3u8");
+    const segmentPattern = path.join(outputDir, "segment%03d.ts");
+
+    await run(
+        `ffmpeg -i "${inputPath}" ` +
+        `-c copy ` +
+        `-f hls ` +
+        `-hls_time ${segmentDuration} ` +
+        `-hls_list_size 0 ` +
+        `-hls_segment_filename "${segmentPattern}" ` +
+        `"${playlistPath}" -y`
+    );
+
+    return playlistPath;
+}
+
+export { extractMetadata, generateThumbnail, transcode, generateHLS };
