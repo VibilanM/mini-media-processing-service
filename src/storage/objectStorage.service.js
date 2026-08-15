@@ -27,5 +27,23 @@ async function getPresignedUrl(objectKey, expirySeconds = 60 * 60) {
     return await minioClient.presignedGetObject(BUCKET, objectKey, expirySeconds);
 }
 
-export { uploadFile, downloadFile, deleteFile, getPresignedUrl };
+async function uploadDirectory(localDir, objectKeyPrefix) {
+    const files = fs.readdirSync(localDir);
+    const uploadedKeys = [];
+
+    for (const filename of files) {
+        const localPath = path.join(localDir, filename);
+        const stat = fs.statSync(localPath);
+
+        if (stat.isDirectory()) continue;
+
+        const objectKey = `${objectKeyPrefix}/${filename}`;
+        await uploadFile(localPath, objectKey);
+        uploadedKeys.push(objectKey);
+    }
+
+    return uploadedKeys;
+}
+
+export { uploadFile, downloadFile, deleteFile, getPresignedUrl, uploadDirectory };
 
