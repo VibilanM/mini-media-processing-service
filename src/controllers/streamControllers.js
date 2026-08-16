@@ -40,3 +40,40 @@ async function streamProxy(req, res) {
     }
 }
 
+async function getStreamUrl(req, res) {
+    try {
+        const video = await Video.findById(req.params.id);
+
+        if (!video) {
+            return res.status(404).json({
+                success: false,
+                message: "Video not found"
+            });
+        }
+
+        if (!video.hls?.playlistKey) {
+            return res.status(404).json({
+                success: false,
+                message: "HLS not available"
+            });
+        }
+
+        const playlistUrl = await getPresignedUrl(video.hls.playlistKey, 60 * 60);
+
+        res.json({
+            success: true,
+            data: {
+                playlistUrl,
+            }
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to generate strea URL",
+            error: error.message
+        });
+    }
+}
+
+export { streamProxy, getStreamUrl };
