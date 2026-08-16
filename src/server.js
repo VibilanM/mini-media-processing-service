@@ -5,6 +5,7 @@ import cors from "cors";
 import uploadRoutes from "./routers/uploadRoutes.js";
 import initializeStorage from "./storage/minio.server.js";
 import { redisConnect } from "./config/redis.js";
+import streamRoutes from "./routers/streamRoutes.js";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/stream", streamRoutes);
 
 app.listen(process.env.PORT, () => {
     console.log(`Server is running on http://localhost:${process.env.PORT}`);
