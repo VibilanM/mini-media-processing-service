@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HLS Stream Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            background: #1a1a2e;
+            color: #eee;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+        video {
+            width: 720px;
+            max-width: 90vw;
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        input, button {
+            padding: 8px 16px;
+            margin: 8px;
+            font-size: 14px;
+            font-family: monospace;
+            border-radius: 4px;
+            border: 1px solid #444;
+        }
+        input { background: #16213e; color: #eee; width: 400px; }
+        button { background: #0f3460; color: #eee; cursor: pointer; }
+        button:hover { background: #1a4a8a; }
+        .controls { margin: 20px 0; }
+        h1 { color: #e94560; }
+        #log {
+            margin-top: 20px;
+            padding: 16px;
+            background: #16213e;
+            border-radius: 8px;
+            width: 720px;
+            max-width: 90vw;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 HLS Stream Test</h1>
+
+    <div class="controls">
+        <div>
+            <label>Option A — Proxy URL:</label><br>
+            <input id="proxyUrl" placeholder="http://localhost:4000/api/stream/VIDEO_ID/playlist.m3u8">
+            <button onclick="loadProxy()">Play (Proxy)</button>
+        </div>
+        <br>
+        <div>
+            <label>Option B — Video ID (pre-signed):</label><br>
+            <input id="videoId" placeholder="Enter video _id from MongoDB">
+            <button onclick="loadPresigned()">Play (Pre-signed)</button>
+        </div>
+    </div>
+
+    <video id="player" controls></video>
+
+    <div id="log">Request log will appear here...\n</div>
+
+    <script>
+        const video = document.getElementById("player");
+        const logEl = document.getElementById("log");
+
+        function log(msg) {
+            logEl.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function loadHLS(url) {
+            if (Hls.isSupported()) {
+                const hls = new Hls({
+                    debug: false,
+                });
+
+                hls.loadSource(url);
+                hls.attachMedia(video);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    log(`Manifest loaded. ${hls.levels.length} quality level(s).`);
+                    video.play();
+                });
+
+                hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+                    log(`Segment loaded: ${data.frag.relurl} (${(data.frag.duration).toFixed(2)}s)`);
+                });
+
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    log(`ERROR: ${data.type} — ${data.details}`);
+                    if (data.fatal) {
+                        log("Fatal error. Playback stopped.");
+                    }
+                });
+
+            } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+                // Safari has native HLS support
+                video.src = url;
+                video.addEventListener("loadedmetadata", () => video.play());
+            } else {
+                log("HLS is not supported in this browser.");
+            }
+        }
+
+        // Option A: Direct proxy through Express (supports full URL or raw video ID)
+        function loadProxy() {
+            let input = document.getElementById("proxyUrl").value.trim();
+            if (!input) {
+                // If proxyUrl is empty, check if videoId input has a value
+                input = document.getElementById("videoId").value.trim();
+            }
+            if (!input) return log("Enter a proxy URL or Video ID first");
+
+            let url = input;
+            if (!input.startsWith("http://") && !input.startsWith("https://")) {
+                url = `http://localhost:4000/api/stream/${input}/playlist.m3u8`;
+            }
+
+            log(`Loading via proxy: ${url}`);
+            loadHLS(url);
+        }
+
+        // Option B: Fetch pre-signed URL, then load
+        async function loadPresigned() {
+            const id = document.getElementById("videoId").value.trim();
+            if (!id) return log("Enter a video ID first");
+
+            log(`Fetching pre-signed URL for video: ${id}`);
+
+            try {
+                const resp = await fetch(`http://localhost:4000/api/stream/${id}/url`);
+                const body = await resp.json();
+
+                if (!body.success) {
+                    return log(`Server error: ${body.message}`);
+                }
+
+                log(`Got pre-signed URL. Loading...`);
+                loadHLS(body.data.playlistUrl);
+            } catch (err) {
+                log(`Fetch failed: ${err.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

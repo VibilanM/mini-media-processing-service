@@ -167,18 +167,18 @@ async function getVideoStatus(req, res) {
         res.json({
             success: true,
             data: {
-                id:        video._id,
-                title:     video.title,
-                status:    video.status,
+                id: video._id,
+                title: video.title,
+                status: video.status,
                 thumbnail: video.thumbnail || null,
-                versions:  video.versions || [],
+                versions: video.versions || [],
                 metadata: {
-                    duration:   video.duration,
-                    width:      video.width,
-                    height:     video.height,
-                    codec:      video.videoCodec,
+                    duration: video.duration,
+                    width: video.width,
+                    height: video.height,
+                    codec: video.videoCodec,
                 },
-                error:     video.error || null,
+                error: video.error || null,
                 createdAt: video.createdAt,
                 updatedAt: video.updatedAt,
             }

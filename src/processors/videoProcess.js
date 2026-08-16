@@ -104,7 +104,7 @@ async function hlsStage(videoId, versions) {
         return null;
     }
 
-    const hlsOutpuDir = path.join(TEMP_DIR, `${videoId}-hls`);
+    const hlsOutputDir = path.join(TEMP_DIR, `${videoId}-hls`);
 
     await generateHLS(source.localPath, hlsOutputDir);
 
@@ -114,11 +114,11 @@ async function hlsStage(videoId, versions) {
 
     const playlistKey = `videos/${videoId}/hls/playlist.m3u8`;
 
-    console.log(`[$videoId}] HLS upload complete. Playlist: ${playlistKey}`);
+    console.log(`[${videoId}] HLS upload complete. Playlist: ${playlistKey}`);
 
     return {
         playlistKey,
-        segmentCount: hlsFiles.filter(f => f.endsWith(".ts")).length,
+        segmentCount: hlsObjectKeys.filter(f => f.endsWith(".ts")).length,
         hlsOutputDir,
     };
 }
@@ -131,10 +131,10 @@ async function saveMetadataStage(videoId, versions, hlsResult) {
         height: v.height,
     }));
 
-    await Video.findByIdAndUpdate(videoId, {
+    const updateFields = {
         versions: cleanVersions,
         status: "completed",
-    });
+    };
 
     if (hlsResult) {
         updateFields.hls = {
@@ -143,9 +143,9 @@ async function saveMetadataStage(videoId, versions, hlsResult) {
         };
     }
 
-    await Video.findByIdAndUpdate(videoId, updateFields)
+    await Video.findByIdAndUpdate(videoId, updateFields);
 
-    console.log(`[${videoId}] All versions saved. Statys -> Completed`);
+    console.log(`[${videoId}] All versions saved. Status -> completed`);
 }
 
 async function cleanupStage(videoId, localInputPath, versions, hlsResult) {

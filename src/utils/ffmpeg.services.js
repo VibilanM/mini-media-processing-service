@@ -53,7 +53,7 @@ async function transcode(inputPath, outputPath, width, height) {
     return outputPath;
 }
 
-async function generateHLS(inputPathh, outputDir, segmentDurations = 6) {
+async function generateHLS(inputPath, outputDir, segmentDuration = 6) {
     const { mkdirSync } = await import("node:fs");
     mkdirSync(outputDir, { recursive: true });
 
