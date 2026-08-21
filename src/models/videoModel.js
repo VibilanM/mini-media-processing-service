@@ -40,6 +40,18 @@ const videoSchema = new mongoose.Schema({
         playlistKey: String,
         segmentCount: Number,
     },
+    completedStages: {
+        type: [String],
+        default: [],
+    },
+    cachedMetadata: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null,
+    },
+    cachedVersions: {
+        type: [mongoose.Schema.Types.Mixed],
+        default: [],
+    },
     error: String,
 }, { timestamps: true });
 
