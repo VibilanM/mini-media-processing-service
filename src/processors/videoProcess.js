@@ -223,14 +223,25 @@ async function processVideo(videoId, originalKey) {
             versions = await transcodeStage(videoId, localInputPath, metadata);
             await markStageComplete(videoId, "transcode", {
                 cachedVersions: versions 
-            })
+            });
         };
 
-        await uploadStage(videoId, versions);
+        if (done.has("upload")) {
+            console.log(`[${videoId}] Skipping upload (already done)`);
+        } else {
+            await uploadStage(videoId, versions);
+            await markStageComplete(videoId, "upload");
+        }
 
-        hlsResult = await hlsStage(videoId, versions);
+        if (done.has("hls")) {
+            console.log(`[${videoId}] Skipping HLS (already done)`);
+        } else {
+            hlsResult = await hlsStage(videoId, versions);
+            await markStageComplete(videoId, "hls");
+        }
 
         await saveMetadataStage(videoId, versions, hlsResult);
+        await markStageComplete(videoId, "complete");
     }
     catch (err) {
         await updateStatus(videoId, "failed", {
