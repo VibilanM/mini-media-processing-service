@@ -173,6 +173,14 @@ async function cleanupStage(videoId, localInputPath, versions, hlsResult) {
     }
 }
 
+async function markStageComplete(videoId, stage, extraFields = {}) {
+    await Video.findByIdAndUpdate(videoId, {
+        $addToSet: { completedStages: stage },
+        ...extraFields,
+    });
+    console.log(`[${videoId}] Stage Completed : ${stage}`);
+}
+
 async function processVideo(videoId, originalKey) {
     if (!fs.existsSync(TEMP_DIR)) {
         fs.mkdirSync(TEMP_DIR, { recursive: true });
@@ -186,11 +194,37 @@ async function processVideo(videoId, originalKey) {
         await downloadFile(originalKey, localInputPath);
         console.log(`[${videoId}] Downloaded original -> ${localInputPath}`);
 
-        const metadata = await metadataStage(videoId, localInputPath);
+        const video = await Video.findById(videoId);
+        const done = new Set(video.completedStages || []);
 
-        await thumbnailStage(videoId, localInputPath);
+        let metadata;
+        if (done.has("metadata")) {
+            console.log(`[${videoId}] Skipping metadata`);
+            metadata = video.cachedMetadata;
+        }
+        else{
+            metadata = await metadataStage(videoId, localInputPath);
+            await markStageComplete(videoId, "metadata", { cachedMetadata: metadara });
+        }
 
-        versions = await transcodeStage(videoId, localInputPath, metadata);
+        if (done.has("thumbnail")) {
+            console.log(`[${videoId}] Skilling thumbnail`);
+        }
+        else {
+            await thumbnailStage(videoId, localInputPath);
+            await markStageComplete(videoId, "thumbnail");
+        }
+
+        if (done.has("transcode")) {
+            console.log(`[${videoId}] Skipping transcode`);
+            versions = video.cachedVersions;
+        }
+        else {
+            versions = await transcodeStage(videoId, localInputPath, metadata);
+            await markStageComplete(videoId, "transcode", {
+                cachedVersions: versions 
+            })
+        };
 
         await uploadStage(videoId, versions);
 
