@@ -25,6 +25,13 @@ async function uploadVideo(req, res) {
         await videoQueue.add("process-video", {
             videoId: video._id.toString(),
             originalKey: objectKey,
+        },
+        {
+            attempts: 3,
+            backoff: {
+                type: "exponential",
+                delay: 5000,
+            }
         });
 
         fs.unlinkSync(req.file.path);

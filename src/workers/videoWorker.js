@@ -12,11 +12,9 @@ const worker = new Worker(
     async (job) => {
         const { videoId, originalKey } = job.data;
 
-        console.log(`[Worker] Picked up job for video: ${videoId}`);
+        console.log(`[Worker] Attempt ${job.attemptsMade + 1}/${job.opts.attempts} for video: ${videoId}`);
 
         await processVideo(videoId, originalKey);
-
-        console.log(`[Worker] Finished job for video: ${videoId}`);
     },
     {
         connection: {
