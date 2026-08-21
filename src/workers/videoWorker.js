@@ -22,6 +22,13 @@ const worker = new Worker(
             port: 6379
         },
         concurrency: 1,
+        settings: {
+            backOffStrategy: (attempstsMade) => {
+                const baseDelay = 5000;
+                const maxDelay = baseDelay * Math.pow(2, attemptsMade);
+                return Math.floor(Math.random() * maxDelay);
+            },
+        },
     }
 );
 

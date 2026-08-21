@@ -27,11 +27,10 @@ async function uploadVideo(req, res) {
             originalKey: objectKey,
         },
         {
-            attempts: 3,
+            attempts: 4,
             backoff: {
-                type: "exponential",
-                delay: 5000,
-            }
+                type: "custom",
+            },
         });
 
         fs.unlinkSync(req.file.path);
