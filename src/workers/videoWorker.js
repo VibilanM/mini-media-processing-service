@@ -2,6 +2,8 @@ import { Worker } from "bullmq";
 import dotenv from "dotenv";
 import connectDB from "../config/db.js";
 import { processVideo } from "../processors/videoProcess.js";
+import { classifyError } from "../utils/errors.js";
+import { UnrecoverableError } from "bullmq";
 
 dotenv.config();
 
@@ -12,9 +14,20 @@ const worker = new Worker(
     async (job) => {
         const { videoId, originalKey } = job.data;
 
-        console.log(`[Worker] Attempt ${job.attemptsMade + 1}/${job.opts.attempts} for video: ${videoId}`);
+        try {
+            await processVideo(videoId, originalKey);
+        }
+        catch (err) {
+            const errorType = classifyError(err);
 
-        await processVideo(videoId, originalKey);
+            if (errorType == "permanent") {
+                console.error(`[Worker] POISON JOB detected for ${videoId}: ${err.message}`);
+                throw new UnrecoverableError(err.message);
+            }
+
+            console.warn(`[Worker] Transient failure for ${videoId}, will retry: ${err.message}`);
+            throw err;
+        }
     },
     {
         connection: {
