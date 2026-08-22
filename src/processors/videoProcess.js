@@ -54,32 +54,43 @@ async function thumbnailStage(videoId, localInputPath) {
 }
 
 async function transcodeStage(videoId, localInputPath, sourceMetadata) {
-    const versions = []
+    const versions = [];
+    const failures = [];
 
     for (const res of RESOLUTIONS) {
         if (res.width > sourceMetadata.width) {
             continue;
         }
 
-        await updateStatus(videoId, "transcoding");
-        console.log(`[${videoId}] Transcoding ${res.name}....`);
+        try {
+            await updateStatus(videoId, "transcoding");
+            console.log(`[${videoId}] Transcoding ${res.name}....`);
 
-        const outputFilename = `${videoId}-${res.name}.mp4`;
-        const localOutputPath = path.join(TEMP_DIR, outputFilename);
+            const outputFilename = `${videoId}-${res.name}.mp4`;
+            const localOutputPath = path.join(TEMP_DIR, outputFilename);
 
-        await transcode(localInputPath, localOutputPath, res.width);
+            await transcode(localInputPath, localOutputPath, res.width);
 
-        const outputMeta = await extractMetadata(localOutputPath);
+            const outputMeta = await extractMetadata(localOutputPath);
 
-        versions.push({
-            resolution: res.name,
-            objectKey: `videos/${outputFilename}`,
-            localPath: localOutputPath,
-            width: outputMeta.width,
-            height: outputMeta.height,
-        });
+            versions.push({
+                resolution: res.name,
+                objectKey: `videos/${outputFilename}`,
+                localPath: localOutputPath,
+                width: outputMeta.width,
+                height: outputMeta.height,
+            });
 
-        console.log(`[${videoId}] ${res.name} transcoded -> ${localOutputPath}`);
+            console.log(`[${videoId}] ${res.name} transcoded -> ${localOutputPath}`);
+        }
+        catch (err) {
+            console.error(`[${videoId}] Failed to transcode ${res.name}: ${err.message}`);
+            failures.push({ resolution: res.name, error: err.message });
+        }
+    }
+
+    if (versions.length === 0) {
+        throw new Error(`All transcoding failed: ${failures.map((f) => `${f.resolution}: ${f.error}`).join("; ")}`);
     }
 
     return versions;
@@ -202,7 +213,7 @@ async function processVideo(videoId, originalKey) {
             console.log(`[${videoId}] Skipping metadata`);
             metadata = video.cachedMetadata;
         }
-        else{
+        else {
             metadata = await metadataStage(videoId, localInputPath);
             await markStageComplete(videoId, "metadata", { cachedMetadata: metadara });
         }
@@ -222,7 +233,7 @@ async function processVideo(videoId, originalKey) {
         else {
             versions = await transcodeStage(videoId, localInputPath, metadata);
             await markStageComplete(videoId, "transcode", {
-                cachedVersions: versions 
+                cachedVersions: versions
             });
         };
 
@@ -244,11 +255,15 @@ async function processVideo(videoId, originalKey) {
         await markStageComplete(videoId, "complete");
     }
     catch (err) {
-        await updateStatus(videoId, "failed", {
+        const video = await Video.findById(videoId);
+        const completedStages = video.completedStages || [];
+
+        const hasUsableContent = completedStages.includes("uploaded");
+
+        await updateStatus(videoId, hasUsableContent ? "partial" : "failed", {
             error: err.message || "Unknown error during processing"
         });
 
-        console.error(`[${videoId}] Pipeline failed: ${err}`);
         throw err;
     }
     finally {

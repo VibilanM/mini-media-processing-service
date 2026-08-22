@@ -23,7 +23,8 @@ const videoSchema = new mongoose.Schema({
             "uploading",
             "generating_hls",
             "completed",
-            "failed"
+            "failed",
+            "partial"
         ],
         default: "uploaded"
     },
