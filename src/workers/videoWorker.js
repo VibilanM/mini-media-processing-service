@@ -4,6 +4,7 @@ import connectDB from "../config/db.js";
 import { processVideo } from "../processors/videoProcess.js";
 import { classifyError } from "../utils/errors.js";
 import { UnrecoverableError } from "bullmq";
+import { videoQueue, deadLetterQueue } from "../queues/videoQueues.js";
 
 dotenv.config();
 
@@ -49,6 +50,26 @@ worker.on("completed", (job) => {
     console.log(`[Worker] Job ${job.id} completed`);
 });
 
-worker.on("failed", (job, err) => {
-    console.error(`[Worker] Job ${job.id} failed: ${err.message}`);
+worker.on("failed", async (job, err) => {
+    const retriesExhausted = job.attemptsMade >= job.opts.attempts;
+    const isPoisonJob = err.name === "UnrecoverableError";
+
+    if (retriesExhausted || isPoisonJob) {
+        console.error(`[Worker] Job ${job.id} permanently failed. Moving to DLQ.`);
+
+        await deadLetterQueue.add("dead-letter", {
+            originalJobId: job.id,
+            originalJobData: job.data,
+            failedAt: new Date().toISOString(),
+            attemptsMade: job.attemptsMade,
+            error: err.message,
+            errorStack: err.stack,
+            isPoisonJob,
+        });
+
+        console.error(`[DLQ] Job ${job.id} stored in Dead Letter Queue`);
+    }
+    else {
+        console.warn(`[Worker] Job ${job.id} failed. Attemp ${job.attemptsMade}/${job.opts.attempts}. Will retry.`);
+    }
 });

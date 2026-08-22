@@ -1,10 +1,12 @@
 import { Queue } from "bullmq";
 
-const videoQueue = new Queue("video-processing", {
-    connection: {
-        host: "localhost",
-        port: 6379
-    }
-});
+const connection = {
+    host: "localhost",
+    port: 6379,
+};
 
-export default videoQueue;
+const videoQueue = new Queue("video-processing", { connection });
+
+const deadLetterQueue = new Queue("video-processing-dlq", { connection });
+
+export { videoQueue, deadLetterQueue };
