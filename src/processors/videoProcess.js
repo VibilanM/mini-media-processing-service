@@ -264,6 +264,13 @@ async function processVideo(videoId, originalKey) {
             error: err.message || "Unknown error during processing"
         });
 
+        // await runCompensations(videoId, video.completedStages || []);
+
+        // await updateStatus(videoId, "failed", {
+        //     error: err.message,
+        //     completedStages: [],
+        // });
+
         throw err;
     }
     finally {
