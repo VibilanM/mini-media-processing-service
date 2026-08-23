@@ -27,6 +27,7 @@ async function uploadVideo(req, res) {
             originalKey: objectKey,
         },
         {
+            jobId: video._id.toString(),
             attempts: 4,
             backoff: {
                 type: "custom",
