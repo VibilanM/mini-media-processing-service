@@ -2,7 +2,7 @@ import minioClient from "../storage/minio.client.js";
 import fs from "node:fs";
 import dotenv from "dotenv";
 import Video from "../models/videoModel.js";
-import videoQueue from "../queues/videoQueues.js";
+import { videoQueue } from "../queues/videoQueues.js";
 
 dotenv.config();
 

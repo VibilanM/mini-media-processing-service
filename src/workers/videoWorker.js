@@ -42,7 +42,7 @@ const worker = new Worker(
         },
         concurrency: 1,
         settings: {
-            backOffStrategy: (attemptsMade) => {
+            backoffStrategy: (attemptsMade) => {
                 const baseDelay = 5000;
                 const maxDelay = baseDelay * Math.pow(2, attemptsMade);
                 const jitter = Math.floor(Math.random() * maxDelay);

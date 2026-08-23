@@ -27,7 +27,7 @@ async function replayDLGJob(req, res) {
     const { videoId, originalKey } = dlqJob.data.originalJobData;
 
     await videoQueue.add("process-video", { videoId, originalKey }, {
-        attemps: 3,
+        attempts: 3,
         backoff: {
             type: "exponential",
             delay: 5000

@@ -3,7 +3,6 @@ import fs from "node:fs";
 import Video from "../models/videoModel.js";
 import { extractMetadata, generateThumbnail, transcode, generateHLS } from "../utils/ffmpeg.services.js";
 import { uploadFile, downloadFile, uploadDirectory } from "../storage/objectStorage.service.js";
-import { maybeFail } from "../utils/chaos.js";
 
 const RESOLUTIONS = [
     { name: "1080p", width: 1920 },
@@ -20,7 +19,6 @@ async function updateStatus(videoId, status, extraFields = {}) {
 
 async function metadataStage(videoId, localInputPath) {
     await updateStatus(videoId, "metadata");
-    maybeFail("metadata");
     const metadata = await extractMetadata(localInputPath);
 
     await Video.findByIdAndUpdate(videoId, {
@@ -39,7 +37,6 @@ async function metadataStage(videoId, localInputPath) {
 
 async function thumbnailStage(videoId, localInputPath) {
     await updateStatus(videoId, "thumbnail");
-    maybeFail("thumbnail");
 
     const thumbnailFilename = `${videoId}-thumb.jpg`;
     const localThumbPath = path.join(TEMP_DIR, thumbnailFilename);
@@ -66,7 +63,6 @@ async function transcodeStage(videoId, localInputPath, sourceMetadata) {
 
         try {
             await updateStatus(videoId, "transcoding");
-            maybeFail("transcoding");
 
             console.log(`[${videoId}] Transcoding ${res.name}....`);
 
@@ -104,7 +100,6 @@ async function uploadStage(videoId, versions) {
     await updateStatus(videoId, "uploading");
 
     for (const v of versions) {
-        maybeFail("uploading");
         await uploadFile(v.localPath, v.objectKey);
         console.log(`[${videoId}] Uploaded ${v.resolution} -> ${v.objectKey}`);
     }
