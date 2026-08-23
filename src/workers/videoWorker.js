@@ -1,10 +1,9 @@
-import { Worker } from "bullmq";
+import { Worker, UnrecoverableError } from "bullmq";
 import dotenv from "dotenv";
-import connectDB from "../config/db.js";
 import { processVideo } from "../processors/videoProcess.js";
+import { deadLetterQueue } from "../queues/videoQueues.js";
 import { classifyError } from "../utils/errors.js";
-import { UnrecoverableError } from "bullmq";
-import { videoQueue, deadLetterQueue } from "../queues/videoQueues.js";
+import connectDB from "../config/db.js";
 
 dotenv.config();
 
@@ -15,13 +14,19 @@ const worker = new Worker(
     async (job) => {
         const { videoId, originalKey } = job.data;
 
+        console.log(
+            `[Worker] Attempt ${job.attemptsMade + 1}/${job.opts.attempts || 1} ` +
+            `for video: ${videoId} (Job ID: ${job.id})`
+        );
+
         try {
             await processVideo(videoId, originalKey);
+            console.log(`[Worker] Finished job for video: ${videoId}`);
         }
         catch (err) {
             const errorType = classifyError(err);
 
-            if (errorType == "permanent") {
+            if (errorType === "permanent") {
                 console.error(`[Worker] POISON JOB detected for ${videoId}: ${err.message}`);
                 throw new UnrecoverableError(err.message);
             }
@@ -37,10 +42,12 @@ const worker = new Worker(
         },
         concurrency: 1,
         settings: {
-            backOffStrategy: (attempstsMade) => {
+            backOffStrategy: (attemptsMade) => {
                 const baseDelay = 5000;
                 const maxDelay = baseDelay * Math.pow(2, attemptsMade);
-                return Math.floor(Math.random() * maxDelay);
+                const jitter = Math.floor(Math.random() * maxDelay);
+                console.log(`[Worker] Backing off for ${jitter} ms before retry`);
+                return jitter;
             },
         },
     }
@@ -51,7 +58,7 @@ worker.on("completed", (job) => {
 });
 
 worker.on("failed", async (job, err) => {
-    const retriesExhausted = job.attemptsMade >= job.opts.attempts;
+    const retriesExhausted = job.attemptsMade >= (job.opts.attempts || 1);
     const isPoisonJob = err.name === "UnrecoverableError";
 
     if (retriesExhausted || isPoisonJob) {
@@ -73,3 +80,5 @@ worker.on("failed", async (job, err) => {
         console.warn(`[Worker] Job ${job.id} failed. Attemp ${job.attemptsMade}/${job.opts.attempts}. Will retry.`);
     }
 });
+
+console.log(`[Worker] Video processing worker started. Waiting for jobs...`);
