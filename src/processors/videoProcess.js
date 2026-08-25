@@ -3,6 +3,7 @@ import fs from "node:fs";
 import Video from "../models/videoModel.js";
 import { extractMetadata, generateThumbnail, transcode, generateHLS } from "../utils/ffmpeg.services.js";
 import { uploadFile, downloadFile, uploadDirectory } from "../storage/objectStorage.service.js";
+import { updateProgress, resetProgress} from "../services/videoProgress.service.js";
 
 const RESOLUTIONS = [
     { name: "1080p", width: 1920 },
@@ -63,6 +64,7 @@ async function transcodeStage(videoId, localInputPath, sourceMetadata) {
 
         try {
             await updateStatus(videoId, "transcoding");
+            await updateProgress(videoId, `transcoding_${res.name}`);
 
             console.log(`[${videoId}] Transcoding ${res.name}....`);
 
@@ -197,6 +199,8 @@ async function processVideo(videoId, originalKey) {
         fs.mkdirSync(TEMP_DIR, { recursive: true });
     }
 
+    await resetProgress(videoId);
+
     const localInputPath = path.join(TEMP_DIR, `${videoId}-original.mp4`);
     let versions = [];
     let hlsResult = null;
@@ -204,6 +208,7 @@ async function processVideo(videoId, originalKey) {
     try {
         await downloadFile(originalKey, localInputPath);
         console.log(`[${videoId}] Downloaded original -> ${localInputPath}`);
+        await updateProgress(videoId, "queued");
 
         const video = await Video.findById(videoId);
         const done = new Set(video.completedStages || []);
@@ -214,14 +219,16 @@ async function processVideo(videoId, originalKey) {
             metadata = video.cachedMetadata;
         }
         else {
+            await updateProgress(videoId, "metadata");
             metadata = await metadataStage(videoId, localInputPath);
-            await markStageComplete(videoId, "metadata", { cachedMetadata: metadara });
+            await markStageComplete(videoId, "metadata", { cachedMetadata: metadata });
         }
 
         if (done.has("thumbnail")) {
             console.log(`[${videoId}] Skilling thumbnail`);
         }
         else {
+            await updateProgress(videoId, "thumbnail");
             await thumbnailStage(videoId, localInputPath);
             await markStageComplete(videoId, "thumbnail");
         }
@@ -240,6 +247,7 @@ async function processVideo(videoId, originalKey) {
         if (done.has("upload")) {
             console.log(`[${videoId}] Skipping upload (already done)`);
         } else {
+            await updateProgress(videoId, "uploading");
             await uploadStage(videoId, versions);
             await markStageComplete(videoId, "upload");
         }
@@ -247,11 +255,13 @@ async function processVideo(videoId, originalKey) {
         if (done.has("hls")) {
             console.log(`[${videoId}] Skipping HLS (already done)`);
         } else {
+            await updateProgress(videoId, "generating_hls");
             hlsResult = await hlsStage(videoId, versions);
             await markStageComplete(videoId, "hls");
         }
 
         await saveMetadataStage(videoId, versions, hlsResult);
+        await updateProgress(videoId, "completed");
         await markStageComplete(videoId, "complete");
     }
     catch (err) {

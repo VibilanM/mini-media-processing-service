@@ -177,6 +177,8 @@ async function getVideoStatus(req, res) {
                 id: video._id,
                 title: video.title,
                 status: video.status,
+                progress: video.progress || 0,
+                currentStage: video.currentStage || null,
                 thumbnail: video.thumbnail || null,
                 versions: video.versions || [],
                 metadata: {
