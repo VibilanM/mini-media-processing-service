@@ -28,6 +28,16 @@ const videoSchema = new mongoose.Schema({
         ],
         default: "uploaded"
     },
+    progress: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100,
+    },
+    currentStage: {
+        type: String,
+        default: null,
+    },
     duration: Number,
     width: Number,
     height: Number,
