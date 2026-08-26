@@ -1,0 +1,30 @@
+# Production compose — no local infra, uses managed services
+# Usage: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env.production
+    volumes:
+      - uploads:/app/uploads
+      - temp:/app/temp
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    env_file:
+      - .env.production
+    volumes:
+      - temp:/app/temp
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  temp:

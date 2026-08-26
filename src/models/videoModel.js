@@ -12,6 +12,16 @@ const versionSchema = new mongoose.Schema({
 const videoSchema = new mongoose.Schema({
     title: String,
     originalKey: String,
+    uploader: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null,
+    },
+    visibility: {
+        type: String,
+        enum: ["public", "private"],
+        default: "public",
+    },
     status: {
         type: String,
         enum: [
@@ -65,6 +75,9 @@ const videoSchema = new mongoose.Schema({
     },
     error: String,
 }, { timestamps: true });
+
+// Index for the public dashboard query
+videoSchema.index({ status: 1, visibility: 1, createdAt: -1 });
 
 const Video = mongoose.model("Video", videoSchema);
 

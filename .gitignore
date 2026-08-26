@@ -2,8 +2,7 @@ env/
 node_modules/
 .env
 uploads/
-uploads/
-uploads/
 temp/
 hls-test/
-hls-test
+client/node_modules/
+client/dist/

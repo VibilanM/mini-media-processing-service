@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+# Install FFmpeg — the worker uses it for transcoding, thumbnails, HLS
+RUN apk add --no-cache ffmpeg
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci --production
+
+COPY src/ ./src/
+
+# Worker needs temp directory for processing intermediate files
+RUN mkdir -p temp
+
+# Start the worker process (not the API server)
+CMD ["node", "src/workers/videoWorker.js"]

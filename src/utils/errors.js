@@ -40,7 +40,7 @@ function classifyError(error) {
     ]
 
     for (const pattern of transientPatterns) {
-        if (message.includes(patterns)) {
+        if (message.includes(pattern)) {
             return "transient";
         }
     }

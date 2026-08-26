@@ -1,0 +1,144 @@
+.upload-page {
+    display: flex;
+    justify-content: center;
+    padding: 40px 24px;
+}
+
+.upload-card {
+    width: 100%;
+    max-width: 520px;
+    background: #181818;
+    border: 1px solid #272727;
+    border-radius: 12px;
+    padding: 32px;
+}
+
+.upload-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f1f1;
+    margin: 0 0 24px;
+}
+
+.upload-error {
+    background: #2d1b1b;
+    border: 1px solid #5c2727;
+    color: #f87171;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.upload-label {
+    display: block;
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 16px;
+}
+
+.upload-input {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px 12px;
+    background: #0f0f0f;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #f1f1f1;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.upload-input:focus {
+    border-color: #4f46e5;
+}
+
+.upload-dropzone {
+    border: 2px dashed #333;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    margin-bottom: 16px;
+}
+
+.upload-dropzone:hover {
+    border-color: #4f46e5;
+}
+
+.dropzone-prompt {
+    color: #666;
+    margin: 0;
+    font-size: 14px;
+}
+
+.dropzone-filename {
+    color: #f1f1f1;
+    margin: 0;
+    font-size: 14px;
+}
+
+.upload-progress-section {
+    margin-bottom: 16px;
+}
+
+.upload-progress-label {
+    color: #aaa;
+    font-size: 13px;
+    margin: 0 0 8px;
+}
+
+.upload-submit {
+    width: 100%;
+    padding: 12px;
+    background: #4f46e5;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.upload-submit:hover:not(:disabled) {
+    background: #4338ca;
+}
+
+.upload-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.processing-section {
+    text-align: center;
+}
+
+.processing-heading {
+    font-size: 18px;
+    color: #f1f1f1;
+    margin: 0 0 20px;
+}
+
+.processing-done {
+    color: #4ade80;
+}
+
+.processing-failed {
+    color: #f87171;
+}
+
+.processing-status {
+    color: #888;
+    font-size: 13px;
+    margin-top: 12px;
+}
+
+.processing-error {
+    color: #f87171;
+    font-size: 13px;
+    margin-top: 12px;
+}

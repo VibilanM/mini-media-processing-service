@@ -1,0 +1,43 @@
+.verify-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 56px);
+    padding: 24px;
+}
+
+.verify-card {
+    text-align: center;
+    background: #181818;
+    border: 1px solid #272727;
+    border-radius: 12px;
+    padding: 48px;
+    max-width: 400px;
+}
+
+.verify-loading {
+    color: #aaa;
+    font-size: 15px;
+}
+
+.verify-success {
+    color: #4ade80;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 16px;
+}
+
+.verify-error {
+    color: #f87171;
+    font-size: 15px;
+}
+
+.verify-link {
+    color: #4f46e5;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.verify-link:hover {
+    text-decoration: underline;
+}

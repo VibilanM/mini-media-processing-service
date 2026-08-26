@@ -1,0 +1,83 @@
+services:
+  # ── API Server ──
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env.docker
+    depends_on:
+      - mongo
+      - redis
+      - minio
+    volumes:
+      - uploads:/app/uploads
+      - temp:/app/temp
+    restart: unless-stopped
+
+  # ── Video Processing Worker ──
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    env_file:
+      - .env.docker
+    depends_on:
+      - mongo
+      - redis
+      - minio
+    volumes:
+      - temp:/app/temp
+    restart: unless-stopped
+
+  # ── MongoDB ──
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  # ── MinIO (S3-compatible object storage) ──
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+  # ── React Frontend (dev) ──
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  redis-data:
+  minio-data:
+  uploads:
+  temp:

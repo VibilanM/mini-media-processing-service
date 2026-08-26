@@ -1,0 +1,31 @@
+.dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.dashboard-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f1f1;
+    margin: 0 0 24px;
+}
+
+.dashboard-status,
+.dashboard-error,
+.dashboard-empty {
+    color: #888;
+    text-align: center;
+    padding: 60px 24px;
+    font-size: 15px;
+}
+
+.dashboard-error {
+    color: #f87171;
+}
+
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}

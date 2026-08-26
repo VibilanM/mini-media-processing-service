@@ -20,6 +20,7 @@ async function uploadVideo(req, res) {
             title: req.body.title,
             originalKey: objectKey,
             status: "queued",
+            uploader: req.user._id,
         });
 
         await videoQueue.add("process-video", {
